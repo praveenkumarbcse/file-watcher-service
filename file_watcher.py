@@ -36,16 +36,26 @@ class AntivirusHandler(FileSystemEventHandler):
     def __init__(self, scan_directory, user_email):
         self.scan_directory = scan_directory
         self.user_email = user_email
+        self.logs_folder = os.path.join(scan_directory, "logs")
+        if not os.path.exists(self.logs_folder):
+            os.makedirs(self.logs_folder)
+            print("Created 'logs' folder.")
 
     def on_created(self, event):
-        if not event.is_directory and not event.src_path.startswith(os.path.join(self.scan_directory, "logs")):
-            print(f"New file created: {event.src_path}")
-            self.scan_file(event.src_path)
+        if not event.is_directory:
+            if event.src_path.startswith(self.logs_folder):
+                self.log_event("created", event.src_path)
+            else:
+                print(f"New file created: {event.src_path}")
+                self.scan_file(event.src_path)
 
     def on_modified(self, event):
-        if not event.is_directory and not event.src_path.startswith(os.path.join(self.scan_directory, "logs")):
-            print(f"File modified: {event.src_path}")
-            self.scan_file(event.src_path)
+        if not event.is_directory:
+            if event.src_path.startswith(self.logs_folder):
+                self.log_event("modified", event.src_path)
+            else:
+                print(f"File modified: {event.src_path}")
+                self.scan_file(event.src_path)
 
     def scan_file(self, file_path):
         try:
@@ -71,13 +81,16 @@ class AntivirusHandler(FileSystemEventHandler):
         except Exception as e:
             print(f"Error scanning file {file_path}: {e}")
 
-def start_file_watcher(path_to_watch, user_email):
-    # Create logs folder if it doesn't exist
-    logs_folder = os.path.join(path_to_watch, "logs")
-    if not os.path.exists(logs_folder):
-        os.makedirs(logs_folder)
-        print("Created 'logs' folder.")
+    def log_event(self, event_type, file_path):
+        try:
+            log_file = os.path.join(self.logs_folder, "file_changes.log")
+            with open(log_file, "a") as log:
+                log.write(f"{event_type.upper()} - {file_path} at {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            print(f"Logged {event_type} event for: {file_path}")
+        except Exception as e:
+            print(f"Error logging event for {file_path}: {e}")
 
+def start_file_watcher(path_to_watch, user_email):
     event_handler = AntivirusHandler(path_to_watch, user_email)
     observer = Observer()
     observer.schedule(event_handler, path_to_watch, recursive=True)
@@ -93,6 +106,7 @@ def start_file_watcher(path_to_watch, user_email):
     print("File watcher service stopped.")
 
 if __name__ == "__main__":
+    import time
     directory_to_watch = os.getcwd()
     user_email = "praveenclg2506@gmail.com"  # Replace with user's email
     
