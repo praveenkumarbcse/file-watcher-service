@@ -38,12 +38,12 @@ class AntivirusHandler(FileSystemEventHandler):
         self.user_email = user_email
 
     def on_created(self, event):
-        if not event.is_directory and not event.src_path.startswith("logs"):
+        if not event.is_directory and not event.src_path.startswith(os.path.join(self.scan_directory, "logs")):
             print(f"New file created: {event.src_path}")
             self.scan_file(event.src_path)
 
     def on_modified(self, event):
-        if not event.is_directory and not event.src_path.startswith("logs"):
+        if not event.is_directory and not event.src_path.startswith(os.path.join(self.scan_directory, "logs")):
             print(f"File modified: {event.src_path}")
             self.scan_file(event.src_path)
 
@@ -72,6 +72,12 @@ class AntivirusHandler(FileSystemEventHandler):
             print(f"Error scanning file {file_path}: {e}")
 
 def start_file_watcher(path_to_watch, user_email):
+    # Create logs folder if it doesn't exist
+    logs_folder = os.path.join(path_to_watch, "logs")
+    if not os.path.exists(logs_folder):
+        os.makedirs(logs_folder)
+        print("Created 'logs' folder.")
+
     event_handler = AntivirusHandler(path_to_watch, user_email)
     observer = Observer()
     observer.schedule(event_handler, path_to_watch, recursive=True)
