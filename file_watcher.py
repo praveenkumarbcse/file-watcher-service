@@ -20,11 +20,11 @@ class AntivirusHandler(FileSystemEventHandler):
         self.scan_directory = scan_directory
 
     def on_created(self, event):
-        if not event.is_directory:
+        if not event.is_directory and not event.src_path.startswith(log_folder):
             self.scan_file(event.src_path)
 
     def on_modified(self, event):
-        if not event.is_directory:
+        if not event.is_directory and not event.src_path.startswith(log_folder):
             self.scan_file(event.src_path)
 
     def scan_file(self, file_path):
