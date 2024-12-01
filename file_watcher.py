@@ -27,10 +27,12 @@ class AntivirusHandler(FileSystemEventHandler):
                 stderr=subprocess.PIPE,
                 text=True
             )
+            # Print the full output of ClamAV scan
+            print(f"Scan details for {file_path}:\n{result.stdout}")
             if result.returncode == 0:
                 print(f"File {file_path} is clean.")
             else:
-                print(f"Warning: Malware detected in file {file_path}.\n{result.stdout}")
+                print(f"Warning: Malware detected in file {file_path}.")
         except Exception as e:
             print(f"Error scanning file {file_path}: {e}")
 
